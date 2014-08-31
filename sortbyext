@@ -12,13 +12,12 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
 
-# Just for fun, handle long options (experimental)
+# Just for fun, handle long options
 args=( "$@" )
 I=0
 while [ ! -z "${args[$I]}" ]
   do
     parm="${args[$I]}"
-    echo consider $parm
     case "$parm" in
 --config-file)
    args[$I]=-c
@@ -28,7 +27,7 @@ while [ ! -z "${args[$I]}" ]
    args[$I]=-d
 ;;
 
---minimum-extension)
+--maximum-extension)
    args[$I]=-m
 ;;
 
@@ -51,13 +50,17 @@ while [ ! -z "${args[$I]}" ]
   done
 set -- "${args[@]}"
 
+
 # process options
-min=0
+min=1
 quiet=0
 mvopt=
 CFG=
 OPTERR=0
-while getopts c:d:mnqh arg
+function v { 
+true
+}
+while getopts c:d:mnqvV:h arg
 do
     case $arg in
 	
@@ -66,10 +69,9 @@ do
 ;;
       d)
 	    fdir="$OPTARG"
-	    shift
 ;;
       m)
-         min=1
+         min=0
 ;;
       n)
 	 mvopt=-n
@@ -77,6 +79,19 @@ do
       q)
 	 quiet=1
 ;;
+      v)
+         function v { 
+	     echo $@ 
+	 }
+;;
+      V)
+	 VOUT="$OPTARG"   # not sure if function reinterprets
+	 date >"$VOUT" 
+	 function v {
+	     echo $@ >>"$VOUT"
+	 }
+;;
+	   
       h|\?|:)
 	  >&2  cat <<EOF
 sortbyext is a bash script to sort a busy directory by file/type extension
@@ -101,10 +116,12 @@ there.
 -d (--directory) Sets the target directory
 
 -h (--help) Shows this message (or any bad option)
--m (--minimum-extension) Causes the smallest extension to be used
-(e.g., x.tar.gz is a .gz file not a tar.gz file)
+-m (--maximum-extension) Causes the largest extension to be used
+(e.g., x.tar.gz is a tar.gz file not a gz file)
 
 -n (--no-overwrite) Prevents overwriting an existing file
+
+-v Verbose mode (for debugging)
 
 -q (--quiet) Inhibits output messages
 
@@ -142,7 +159,11 @@ EOF
     esac
 done
 
+v Command line: $@
+
 shift $(($OPTIND-1))
+
+v Processing: $@
 
 # find config file
 if [ ! -z "$CFG" ]
@@ -167,7 +188,7 @@ then
        CFG=
    fi
 fi
-
+v Config file $CFG
 
 
 if [ -z "$fdir" ]
@@ -179,7 +200,7 @@ while [ ! -z "$1" ]
 do
     full="$1"
     shift	
-
+v Processing $full
     if [ ! -f "$full" ]
     then 
 	>&2 echo Can\'t find $full
@@ -202,9 +223,13 @@ do
 	ext=""
     fi
 
+    v filename is $filename
+    v extension is $ext
+
     mime=$( file -b --mime "$full" )
     mime="${mime%;*}"
-
+    
+    v mime type is $mime
 
 # the logic is, we use the mime type
 # if and only if it has a substitute
@@ -222,6 +247,7 @@ if [ ! -z "$CFG" -a ! -z "$mime" ]
 then
     if egrep -q -i -e "^-$mime\$" $CFG
      then
+	v Ignoring based on mime type
 	continue   # ignore!
     fi
     gline=$( egrep -i -m 1 -e "^=.*:$mime(:|[ \\t]*\$)" $CFG )
@@ -229,6 +255,7 @@ then
     then
 	ext=${gline%%:*}
 	ext=${ext#=}
+	v Found mime match $ext
 	mimeflag=1
     else
 # check for partial mime match
@@ -237,6 +264,7 @@ then
        then
 	ext=${gline%%:*}
 	ext=${ext#=}
+	v Found partial mime match $ext
 	mimeflag=1
        fi
     fi
@@ -247,6 +275,7 @@ fi
 # if no type, we are done
     if [ -z "$ext" ] 
     then
+	v No type, skipping
 	continue
     fi
 
@@ -262,6 +291,7 @@ fi
     then
 	if  egrep -q -i -e "^-$reext[ \\t]*\$" $CFG 
 	then
+	    v Ignoring based on extension
 	    continue  # ignore!
 	fi
     # now check for alias
@@ -270,11 +300,13 @@ fi
 	    then
 	    ext=${gline%%:*}
 	    ext=${ext#=}
+	    v Found alias $ext from extension
 	    fi
     fi
 
 
     dirname="$fdir/$ext"   
+    v Set dirname $dirname
 
 
     # do it (create directory if needed and move)
@@ -282,7 +314,8 @@ fi
     then
 	# refuse to make a directory "over" a file
 	# because that will fail and the mv will then clobber
-	exit 2
+	>&2 echo Error: $dirname exists and is a file
+	continue
     fi
     # make dir if necessary
     [ -d "$dirname" ] || mkdir "$dirname"
@@ -291,6 +324,7 @@ fi
     then
       echo Moving $full to $dirname
     fi
+    v Moving $full to $dirname
     mv $mvopt "$full" "$dirname"
 done
 exit 0
