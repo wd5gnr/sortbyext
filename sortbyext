@@ -98,6 +98,7 @@ sortbyext is a bash script to sort a busy directory by file/type extension
 It is made to be called by
 incron -- or you can manually pass file name to it
 
+Version 1.0 31 Aug 2014
 Copyright (C) 2014 Al Williams (al.williams@awce.com)
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -154,6 +155,8 @@ The program uses the extension name (e.g., pdf) as the sort directory
 5) If there is a sort directory set in step 3 or 4, the file is moved into it
 
 You can copy /usr/local/share/sortbyext/sortbyext.conf to your ~/.config directory to customize. Comments in the file will further explain the format.
+
+Home: https://github.com/wd5gnr/sortbyext
 
 EOF
     exit 1
