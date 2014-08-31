@@ -12,8 +12,44 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
 
+# Just for fun, handle long options (experimental)
+args=( "$@" )
+I=0
+while [ ! -z "${args[$I]}" ]
+  do
+    parm="${args[$I]}"
+    echo consider $parm
+    case "$parm" in
+--config-file)
+   args[$I]=-c
+;;
 
+--directory)
+   args[$I]=-d
+;;
 
+--minimum-extension)
+   args[$I]=-m
+;;
+
+--no-overwrite)
+   args[$I]=-n
+;;
+
+--quiet)
+   args[$I]=-q
+;;
+
+--)
+   break  # stop doing options
+;;
+--?*)
+   args[$I]=-h
+;;
+    esac
+  I=$(( $I + 1 ))
+  done
+set -- "${args[@]}"
 
 # process options
 min=0
@@ -60,16 +96,17 @@ Files with extensions cause a directory to be made
 corresponding to the extension and the file moved
 there.
 
--c sets a configuration file to use; if specified, it must exist or it is an error
+-c (--config-file) Sets a configuration file to use; if specified, it must exist or it is an error
 
--d sets the target directory
+-d (--directory) Sets the target directory
 
--m causes the smallest extension to be used
+-h (--help) Shows this message (or any bad option)
+-m (--minimum-extension) Causes the smallest extension to be used
 (e.g., x.tar.gz is a .gz file not a tar.gz file)
 
--n Prevents overwriting an existing file
+-n (--no-overwrite) Prevents overwriting an existing file
 
--q Inhibits output messages
+-q (--quiet) Inhibits output messages
 
 
 Exclusions, Aliases and Mime Types
