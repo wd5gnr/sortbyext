@@ -13,46 +13,36 @@
 
 
 
-# find config file
-CFG="~/.config/sortbyext.conf"  
-if [ ! -f "$CFG" ]   # use user's file if present or use system file
-then
-    CFG="/usr/local/share/sortbyext/sortbyext.conf"
-fi
-if [ ! -f "$CFG" ]
-then
-   CFG="/usr/share/sortbyext/sortbyext.conf"
-   if [ ! -f "$CFG" ]
-   then
-       CFG=
-   fi
-fi
 
 
 # process options
 min=0
 quiet=0
 mvopt=
-while [[ "$1" =~ ^- ]]
+CFG=
+OPTERR=0
+while getopts c:d:mnqh arg
 do
-    arg=$1
-    shift
     case $arg in
-      -d)
-	    fdir=$1
+	
+      c)
+	    CFG="$OPTARG"
+;;
+      d)
+	    fdir="$OPTARG"
 	    shift
 ;;
-      -m)
+      m)
          min=1
 ;;
-      -n)
+      n)
 	 mvopt=-n
 ;;
-      -q)
+      q)
 	 quiet=1
 ;;
-      -h)
-	   cat <<EOF
+      h|\?|:)
+	  >&2  cat <<EOF
 sortbyext is a bash script to sort a busy directory by file/type extension
 It is made to be called by
 incron -- or you can manually pass file name to it
@@ -65,10 +55,12 @@ You should have received a copy of the GNU General Public License along with thi
 
 sortbyext by Al Williams (al.williams@awce.com)
 Usage:
-sortbyext [-d target_directory] [-m] [-q] [-n] file [file...]
+sortbyext [-d target_directory] [-c config_file] [-m] [-q] [-n] file [file...]
 Files with extensions cause a directory to be made
 corresponding to the extension and the file moved
 there.
+
+-c sets a configuration file to use; if specified, it must exist or it is an error
 
 -d sets the target directory
 
@@ -113,6 +105,33 @@ EOF
     esac
 done
 
+shift $(($OPTIND-1))
+
+# find config file
+if [ ! -z "$CFG" ]
+then
+    if [ ! -f "$CFG" ]   # if User supplied, it must exist
+    then
+	>&2 echo Configuration file "$CFG" not found.
+	exit 5
+    fi
+else
+    CFG="~/.config/sortbyext.conf"   
+fi    
+if [ ! -f "$CFG" ]   # use user's file if present or use system file
+then
+    CFG="/usr/local/share/sortbyext/sortbyext.conf"
+fi
+if [ ! -f "$CFG" ]
+then
+   CFG="/usr/share/sortbyext/sortbyext.conf"
+   if [ ! -f "$CFG" ]
+   then
+       CFG=
+   fi
+fi
+
+
 
 if [ -z "$fdir" ]
 then
@@ -125,8 +144,10 @@ do
     shift	
 
     if [ ! -f "$full" ]
-	then continue
-	fi
+    then 
+	>&2 echo Can\'t find $full
+	continue
+    fi
 
     filename=$(basename "$full")
     if [ "$min" = 1 ] 
