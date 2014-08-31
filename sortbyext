@@ -106,7 +106,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 sortbyext by Al Williams (al.williams@awce.com)
 Usage:
-sortbyext [-d target_directory] [-c config_file] [-m] [-q] [-n] file [file...]
+sortbyext [-d target_directory] [-c config_file] [-m] [-q] [-n] [-v] [-V file] file [file...]
 Files with extensions cause a directory to be made
 corresponding to the extension and the file moved
 there.
@@ -122,6 +122,8 @@ there.
 -n (--no-overwrite) Prevents overwriting an existing file
 
 -v Verbose mode (for debugging)
+
+-V Verbose mode (for debugging) with output to specified file
 
 -q (--quiet) Inhibits output messages
 
