@@ -42,9 +42,11 @@ Exclusions, Aliases and Mime Types
 
 The program looks for a file in your home directory:
 
+
 ~/.config/sortbyext.conf
 
-If this is not found, it then looks for
+If this is not found, it then looks for:
+
 
 /usr/local/share/sortbyext/sortbyext.conf
 
