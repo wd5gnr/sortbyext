@@ -1,0 +1,243 @@
+#!/bin/bash
+# Al Williams al.williams@awce.com
+
+# sortbyext is a bash script to sort a busy directory by file/type extension
+# It is made to be called by
+# incron -- or you can manually pass file name to it
+#
+# Copyright (C) 2014 Al Williams (al.williams@awce.com)
+#
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+
+
+
+# find config file
+CFG="~/.config/sortbyext.conf"  
+if [ ! -f "$CFG" ]   # use user's file if present or use system file
+then
+    CFG="/usr/local/share/sortbyext/sortbyext.conf"
+fi
+if [ ! -f "$CFG" ]
+then
+   CFG="/usr/share/sortbyext/sortbyext.conf"
+   if [ ! -f "$CFG" ]
+   then
+       CFG=
+   fi
+fi
+
+
+# process options
+min=0
+quiet=0
+mvopt=
+while [[ "$1" =~ ^- ]]
+do
+    arg=$1
+    shift
+    case $arg in
+      -d)
+	    fdir=$1
+	    shift
+;;
+      -m)
+         min=1
+;;
+      -n)
+	 mvopt=-n
+;;
+      -q)
+	 quiet=1
+;;
+      -h)
+	   cat <<EOF
+sortbyext is a bash script to sort a busy directory by file/type extension
+It is made to be called by
+incron -- or you can manually pass file name to it
+
+Copyright (C) 2014 Al Williams (al.williams@awce.com)
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+
+sortbyext by Al Williams (al.williams@awce.com)
+Usage:
+sortbyext [-d target_directory] [-m] [-q] [-n] file [file...]
+Files with extensions cause a directory to be made
+corresponding to the extension and the file moved
+there.
+
+-d sets the target directory
+
+-m causes the smallest extension to be used
+(e.g., x.tar.gz is a .gz file not a tar.gz file)
+
+-n Prevents overwriting an existing file
+
+-q Inhibits output messages
+
+
+Exclusions, Aliases and Mime Types
+The program looks for a file in your home directory:
+~/.config/sortbyext.conf
+If this is not found, it then looks for
+/usr/local/share/sortbyext/sortbyext.conf
+If this is not found, it then looks for
+/usr/share/sortbyext/sortbyext.conf
+
+If one is found, the following processing occurs on a file
+named foo.bar with mime type application/example
+1) If the configuration file contains the line -bar, the script skips this file
+2) If the configuration file contains the line -application/example, the script skips this file
+3) If the configuration file contains the a matching line it will use 
+the specified alias name as the directory name. Matching lines for this example
+would include:
+=test:bar
+=test:application/example
+=test:application/ 
+
+All of these lines would match the file and cause it to be sorted into
+directory test 
+4) If there is no match on #3, and the file has a usable extenstion
+The program uses the extension name (e.g., pdf) as the sort directory
+5) If there is a sort directory set in step 3 or 4, the file is moved into it
+
+You can copy /usr/local/share/sortbyext/sortbyext.conf to your ~/.config directory to customize. Comments in the file will further explain the format.
+
+EOF
+    exit 1
+;;
+    esac
+done
+
+
+if [ -z "$fdir" ]
+then
+  fdir=$PWD
+fi
+
+while [ ! -z "$1" ]
+do
+    full="$1"
+    shift	
+
+    if [ ! -f "$full" ]
+	then continue
+	fi
+
+    filename=$(basename "$full")
+    if [ "$min" = 1 ] 
+	then
+	ext="${filename##*.}"
+	else
+	ext="${filename#*.}"
+    fi
+    filename="${full##*/}"
+
+
+
+    if [ "$filename" == "$ext" ]
+    then
+	ext=""
+    fi
+
+    mime=$( file -b --mime "$full" )
+    mime="${mime%;*}"
+
+
+# the logic is, we use the mime type
+# if and only if it has a substitute
+# in the cfg file (an = sign)
+# or if it is blocked in the cfg 
+# file (-).
+# So you can block by mime type
+# of extension and if there is
+# no matching mime type
+# we use the extensions
+
+mimeflag=0
+
+if [ ! -z "$CFG" -a ! -z "$mime" ]
+then
+    if egrep -q -i -e "^-$mime\$" $CFG
+     then
+	continue   # ignore!
+    fi
+    gline=$( egrep -i -m 1 -e "^=.*:$mime(:|[ \\t]*\$)" $CFG )
+    if [ ! -z "$gline" ]
+    then
+	ext=${gline%%:*}
+	ext=${ext#=}
+	mimeflag=1
+    else
+# check for partial mime match
+       gline=$( egrep -i -m 1 -e "^=.*:${mime%/*}/(:|[ \\t]*\$)" $CFG )
+       if [ ! -z "$gline" ]
+       then
+	ext=${gline%%:*}
+	ext=${ext#=}
+	mimeflag=1
+       fi
+    fi
+
+fi
+
+
+# if no type, we are done
+    if [ -z "$ext" ] 
+    then
+	continue
+    fi
+
+
+    # convert ext to lowercase
+    ext=$(echo $ext | tr '[:upper:]' '[:lower:]')
+
+# Check exclusions
+    reext=$( echo $ext | sed s/\\./\\\\./g )
+
+
+    if [ ! -z "$CFG" -a $mimeflag = 0 ]
+    then
+	if  egrep -q -i -e "^-$reext[ \\t]*\$" $CFG 
+	then
+	    continue  # ignore!
+	fi
+    # now check for alias
+	gline=$( egrep -i -m 1 -e "^=.*:$reext(:|[ \\t]*\$)" $CFG )
+	if [ ! -z "$gline" ]
+	    then
+	    ext=${gline%%:*}
+	    ext=${ext#=}
+	    fi
+    fi
+
+
+    dirname="$fdir/$ext"   
+
+
+    # do it (create directory if needed and move)
+    if [ -f "$dirname" ]
+    then
+	# refuse to make a directory "over" a file
+	# because that will fail and the mv will then clobber
+	exit 2
+    fi
+    # make dir if necessary
+    [ -d "$dirname" ] || mkdir "$dirname"
+    # do the move (will clobber existing file!)
+    if [ "$quiet" = 0 ]
+    then
+      echo Moving $full to $dirname
+    fi
+    mv $mvopt "$full" "$dirname"
+done
+exit 0
+
+
+
+
+

@@ -1,0 +1,17 @@
+To install:
+
+sudo mv sortbyext /usr/local/bin
+sudo cp sortbyext /usr/local/share/sortbyext/sortbyext.conf
+mv sortbyext.conf ~/.config/sortbyext.conf
+
+You may want to customize ~/.config/sortbyext.conf to suit your needs
+
+To run automatically on a directory called /home/user/Downloads type:
+
+incrontab -e
+
+And add the following line (also in incrontab.txt)
+/home/user/Downloads IN_MOVED_TO /usr/local/bin/sortbyext -d $@ $@/$#
+
+You may or may not want to add the -m option depending on your tastes
+(see readme.md for details).
