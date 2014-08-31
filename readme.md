@@ -57,24 +57,37 @@ If this is not found, it then looks for
 If one is found, the following processing occurs on a file
 named foo.bar with mime type application/example
 
+
 1) If the configuration file contains the line -bar, the script skips this file
 
+
 2) If the configuration file contains the line -application/example, the script skips this file
+
 
 3) If the configuration file contains the a matching line it will use 
 the specified alias name as the directory name. Matching lines for this example
 would include:
+
+
 =test:bar
+
+
 =test:application/example
+
+
 =test:application/ 
+
 
 All of these lines would match the file and cause it to be sorted into
 directory test 
 
+
 4) If there is no match on #3, and the file has a usable extenstion
 The program uses the extension name (e.g., pdf) as the sort directory
 
+
 5) If there is a sort directory set in step 3 or 4, the file is moved into it
+
 
 You can copy /usr/local/share/sortbyext/sortbyext.conf to your ~/.config directory to customize. Comments in the file will further explain the format.
 
