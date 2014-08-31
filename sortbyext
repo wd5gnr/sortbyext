@@ -108,26 +108,17 @@ You should have received a copy of the GNU General Public License along with thi
 sortbyext by Al Williams (al.williams@awce.com)
 Usage:
 sortbyext [-d target_directory] [-c config_file] [-m] [-q] [-n] [-v] [-V file] file [file...]
-Files with extensions cause a directory to be made
-corresponding to the extension and the file moved
-there.
+Files with extensions cause a directory to be made corresponding to the extension and the file moved there.
 
 -c (--config-file) Sets a configuration file to use; if specified, it must exist or it is an error
-
 -d (--directory) Sets the target directory
-
 -h (--help) Shows this message (or any bad option)
 -m (--maximum-extension) Causes the largest extension to be used
 (e.g., x.tar.gz is a tar.gz file not a gz file)
-
 -n (--no-overwrite) Prevents overwriting an existing file
-
 -v Verbose mode (for debugging)
-
 -V Verbose mode (for debugging) with output to specified file
-
 -q (--quiet) Inhibits output messages
-
 
 Exclusions, Aliases and Mime Types
 The program looks for a file in your home directory:

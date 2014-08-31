@@ -91,3 +91,4 @@ The program uses the extension name (e.g., pdf) as the sort directory
 
 You can copy /usr/local/share/sortbyext/sortbyext.conf to your ~/.config directory to customize. Comments in the file will further explain the format.
 
+Post at Ubuntuforums: http://ubuntuforums.org/showthread.php?t=2242218
