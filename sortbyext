@@ -13,46 +13,67 @@
 
 
 # Just for fun, handle long options
+
+# First get the arguments in an arry
 args=( "$@" )
+# Now list all long options next to their short equivalents
+# The first argument will be used for anything that
+# doesn't match that is an -- option
+# so it should probably be help
+
+# Note that -- will stop scanning arguments
+
+long_args=( --help -h --config-file -c --directory -d --interactive -i --maximum-extension -m --no-overwrite -n --quiet -q )
+
+# for each argument until ""
 I=0
 while [ ! -z "${args[$I]}" ]
   do
     parm="${args[$I]}"
-    case "$parm" in
---config-file)
-   args[$I]=-c
-;;
+# don't do anyting if does not start with --
+    if [ "${parm:0:2}" != "--" ] 
+    then 
+	I=$((I+1))
+	continue
+    fi
+# check for end of long arguments
+    if [ "$parm" == "--" ]
+    then
+# delete -- and stop processing -- arguments
+	args=( "${args[@]:0:$I}" "${args[@]:$((I+1))}" )
+	break
+    fi 
+# For each long_arg (until "")
+    larg=${long_args[0]}
+    J=0
+    lfound=0
+    while [ ! -z "$larg" ]
+    do
+	if [ "$larg" == "$parm" ]
+	  then
+# found it so substitute
+	  lfound=1
+          args[$I]=${long_args[$((J+1))]}
+	  break  # done with this loop
+	fi 
+# skip to next long name
+	J=$((J+2))
+	larg=${long_args[$J]}
+    done
 
---directory)
-   args[$I]=-d
-;;
+    if [ "$lfound" == 0 ]
+      then 
+# didn't find long option so use first (presumably --help)      
+	args[$I]=${long_args[1]}
+      fi 
 
---interactive)
-  args[$I]=-i
-;;
+# Next parameter
+    I=$(( I + 1 ))
+done
 
---maximum-extension)
-   args[$I]=-m
-;;
-
---no-overwrite)
-   args[$I]=-n
-;;
-
---quiet)
-   args[$I]=-q
-;;
-
---)
-   break  # stop doing options
-;;
---?*)
-   args[$I]=-h
-;;
-    esac
-  I=$(( $I + 1 ))
-  done
+# Ok all long arguments converted so put them back
 set -- "${args[@]}"
+
 
 
 # process options
