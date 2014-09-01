@@ -27,6 +27,10 @@ while [ ! -z "${args[$I]}" ]
    args[$I]=-d
 ;;
 
+--interactive)
+  args[$I]=-i
+;;
+
 --maximum-extension)
    args[$I]=-m
 ;;
@@ -57,10 +61,11 @@ quiet=0
 mvopt=
 CFG=
 OPTERR=0
+interactive=0
 function v { 
 true
 }
-while getopts c:d:mnqvV:h arg
+while getopts c:d:himnqvV: arg
 do
     case $arg in
 	
@@ -69,6 +74,9 @@ do
 ;;
       d)
 	    fdir="$OPTARG"
+;;
+      i)
+	    interactive=1
 ;;
       m)
          min=0
@@ -113,6 +121,7 @@ Files with extensions cause a directory to be made corresponding to the extensio
 -c (--config-file) Sets a configuration file to use; if specified, it must exist or it is an error
 -d (--directory) Sets the target directory
 -h (--help) Shows this message (or any bad option)
+-i (--interactive) Prompts before moving each file
 -m (--maximum-extension) Causes the largest extension to be used
 (e.g., x.tar.gz is a tar.gz file not a gz file)
 -n (--no-overwrite) Prevents overwriting an existing file
@@ -321,6 +330,22 @@ fi
       echo Moving $full to $dirname
     fi
     v Moving $full to $dirname
+    if [ "$interactive" = 1 ]
+    then
+      reply="X"
+      while [ "$reply" != "y" -a "$reply" != "n" -a "$reply" != "Y" -a "$reply" != "N" ]
+      do
+        read -s -n 1 -p 'Move file (y/n)?' reply
+      done
+      echo
+      if [ "$reply" == 'n' -o "$reply" == "N" ]
+      then 
+	  echo Not moved
+	  continue;
+      else
+	  echo Moving...
+      fi
+    fi
     mv $mvopt "$full" "$dirname"
 done
 exit 0
