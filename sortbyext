@@ -249,6 +249,8 @@ v Processing $full
 	ext=""
     fi
 
+    realext="$ext" # does not obey mime type
+
     v filename is $filename
     v extension is $ext
 
@@ -307,13 +309,13 @@ fi
 
 
     # convert ext to lowercase
-    ext=$(echo $ext | tr '[:upper:]' '[:lower:]')
+    ext="$(echo $ext | tr '[:upper:]' '[:lower:]')"
 
-# Check exclusions
-    reext=$( echo $ext | sed s/\\./\\\\./g )
+# Check exclusions (realext will be -i matched so ok if it is not all lower)
+    reext=$( echo $realext | sed s/\\./\\\\./g )
 
 
-    if [ ! -z "$CFG" -a $mimeflag = 0 ]
+    if [ ! -z "$CFG" ]
     then
 	if  egrep -q -i -e "^-$reext[ \\t]*\$" $CFG 
 	then
